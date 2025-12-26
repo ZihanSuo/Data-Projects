@@ -3,13 +3,11 @@ import pandas as pd
 from datetime import datetime
 from time import sleep
 
-#配置参数
-API_KEY = 'AIzaSyB-HeztkGR5mKcqlTtvJQIlVQTDES2uGYk'
+API_KEY = ''
 SEARCH_QUERY = 'China travel'
 PUBLISHED_AFTER = '2023-05-01T00:00:00Z'
 PUBLISHED_BEFORE = '2025-05-01T00:00:00Z'
 
-#API 端点
 search_url = 'https://www.googleapis.com/youtube/v3/search'
 video_url = 'https://www.googleapis.com/youtube/v3/videos'
 
@@ -17,9 +15,9 @@ video_infos = []
 next_page_token = None
 seen_video_ids = set()
 
-print("📡 开始抓取所有符合条件的视频...")
+print("📡 Start to get the qualified videos...")
 
-#1: 遍历搜索结果，获取 videoId
+#1: Get the qualified videos
 while True:
     params = {
         'key': API_KEY,
@@ -43,7 +41,7 @@ while True:
     if not video_ids:
         break
 
-    #2: 获取每批视频的详细统计信息
+    #2: Get the detailed info of videos
     stats_params = {
         'key': API_KEY,
         'part': 'snippet,statistics',
@@ -67,22 +65,22 @@ while True:
                 'url': f"https://www.youtube.com/watch?v={item['id']}"
             })
         except Exception as e:
-            print(f"跳过异常视频: {e}")
+            print(f"ignore the abnormal videos: {e}")
 
     next_page_token = data.get('nextPageToken')
     if not next_page_token:
         break
 
-    sleep(0.3)  # 避免触发速率限制
+    sleep(0.3)
 
-print(f"✅ 共抓取视频数：{len(video_infos)}")
+print(f"✅ Total videos：{len(video_infos)}")
 
-#3: 按播放量排序，筛选前100条
+#3: Filter the top 100 videos by the number of views
 df = pd.DataFrame(video_infos)
 df = df.sort_values(by='viewCount', ascending=False).head(100).reset_index(drop=True)
 
-#4: 保存结果
+#4: Store Results
 df.to_csv("top100_videos.csv", index=False)
 df['url'].to_csv("top100_urls.txt", index=False, header=False)
 
-print("📁 已保存为 top100_videos.csv 和 top100_urls.txt")
+print("📁 Stored as top100_videos.csv 和 top100_urls.txt")
